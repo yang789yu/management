@@ -25,15 +25,15 @@
 
 <script>
 import {validateUserName} from '../../utils/validate'
-// import axios from 'axios'
+// import { GetCaptchaCodeApi, LoginApi } from '@/request/api'
 export default {
   name:'loginIndex',
   data() {
     return {
       ruleForm:{
-        username:"",
-        password:"",
-        captchacode:""
+        username:"adjkljs",
+        password:"123456",
+        captchacode:"888888"
       },
       rules:{
         username:[
@@ -42,7 +42,11 @@ export default {
             message:"用户名不能为空",
             trigger:"blur"   // 失去焦点时进行验证
           },
-          { validator: validateUserName, trigger: 'blur' }
+          // 自定义的校验方式
+          {
+             validator: validateUserName, 
+             trigger: 'blur' 
+          }
         ],
         password:[
           {
@@ -66,20 +70,42 @@ export default {
     // this.getCaptChaCode();
   },
   methods: {
-    getCaptChaCode(){
-      // axios.get("http://xue.cnkdl.cn:23683/prod-api/captchaImage")
-      // .then(res=>{
+    async getCaptChaCode(){
+
+      // let res = GetCaptchaCodeApi();
       //   console.log(res);
-      //   if(res.data.code===200){
-      //     this.captchaSrc = "data:image/gif;base64," + res.data.img
-      //   }
-      // })
+      //   if (res == false) return;
+      // 展示验证码图片
+      // this.captchaSrc = "data:image/gif;base64," + res.img;
+      // // 保存uuid，给到登录时候作为参数传过去后端
+      // localStorage.setItem("management-captcha-uuid",res.uuid)
+
     },
     submitForm(formName) {
-        this.$refs[formName].validate((valid) => {
+        this.$refs[formName].validate( async (valid) => {
           if (valid) {
             // 校验通过
             alert('submit!');
+            // let res = await LoginApi.apply({
+            //   username:this.ruleForm.username,
+            //   password:this.ruleForm.password,
+            //   code:this.ruleForm.captchacode,
+            //   uuid:localStorage.getItem("edb-captcha-uuid")
+            // })
+            // if (res == false) return; 
+            // console.log(res);
+
+            //登录成功之后的逻辑
+            // 提示用户登录成功
+            this.$message({message:"登录成功！",type:"success"});
+            // 清除uuid
+            // localStorage.removeItem("edb-captcha-uuid");
+            // 保存token
+            // localStorage.setItem("edb-authorization-token",res.token);
+            // 跳转首页
+            this.$router.push("/")
+            // console.log(res);
+
           } else {
             // 校验不通过
             this.$message({
