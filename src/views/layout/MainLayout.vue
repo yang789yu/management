@@ -33,6 +33,7 @@ export default {
         height: 100%;
         display:flex;
         .layout-right {
+            padding-left:220px ;
             flex:1 // 表示该元素在一个弹性容器内会占据所有剩余的空间
         }
     }

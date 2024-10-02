@@ -5,6 +5,9 @@ import router from './router'
 import store from './store'
 import './plugins/element.js'
 
+import dataV from '@jiaminghi/data-view'
+
+Vue.use(dataV)
 
 Vue.config.productionTip = false
 

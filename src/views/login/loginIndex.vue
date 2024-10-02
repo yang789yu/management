@@ -11,12 +11,13 @@
         </el-form-item>
         <el-form-item label="验证码" prop="captchacode">
           <div class="captcha-box">
-            <el-input v-model.number="ruleForm.captchacode"></el-input>
-            <img src="../../assets/images/loginbg1.jpg" alt="" :style="{ width: 100 + 'px', height: 39 + 'px' }" @click="getCaptChaCode">
-          </div>  
+            <el-input v-model.number="ruleForm.captchacode" placeholder="验证码，点击图片刷新"></el-input>
+            <el-tag :style="{ width: 140 + 'px', height: 39 + 'px' }" @click="getCaptChaCode">{{ viewCaptChaCode }}</el-tag>
+          </div>
         </el-form-item>
         <el-form-item id="login-btn-box">
           <el-button type="primary" @click="submitForm('ruleForm')" class="login-btn">登录</el-button>
+          <el-button style="margin-top: 20px; width: 100%;" @click="register">注册</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -25,15 +26,18 @@
 
 <script>
 import {validateUserName} from '../../utils/validate'
-// import { GetCaptchaCodeApi, LoginApi } from '@/request/api'
+import { mapMutations, mapActions } from 'vuex'
+import { LoginApi } from '@/request/api'
 export default {
   name:'loginIndex',
   data() {
     return {
+      viewCaptChaCode:'',
       ruleForm:{
-        username:"adjkljs",
-        password:"123456",
-        captchacode:"888888"
+        username:"",
+        password:"",
+        captchacode:"",
+        captchaSrc:""
       },
       rules:{
         username:[
@@ -63,49 +67,123 @@ export default {
           },
         ]
       },
-      captchaSrc:""
+    }
+  },
+  computed:{
+
+    
+  },
+  mounted(){
+    this.getCaptChaCode();
+    if(localStorage.getItem('rememberInfo')){
+      // 有上次登录信息，显示上次登录
+      let rememberData = JSON.parse(localStorage.getItem('rememberInfo'))
+      const {username, password} = rememberData
+      this.ruleForm.username = username
+      this.ruleForm.password = password 
     }
   },
   created(){
-    // this.getCaptChaCode();
+    this.changeMenuData([]);
   },
   methods: {
-    async getCaptChaCode(){
-
-      // let res = GetCaptchaCodeApi();
-      //   console.log(res);
-      //   if (res == false) return;
-      // 展示验证码图片
-      // this.captchaSrc = "data:image/gif;base64," + res.img;
-      // // 保存uuid，给到登录时候作为参数传过去后端
+    getCaptChaCode(){
+      this.viewCaptChaCode = '';
+      let codeString = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let codeArray = codeString.split('');
+      let num = codeArray.length;
+      let newCodeArray = [];
+      for (let i = 0; i < 5; i++){
+        let index = Math.floor(Math.random() * num)
+        newCodeArray.push(codeArray[index])
+      }
+      this.viewCaptChaCode = newCodeArray.join('');
+      // 保存uuid，给到登录时候作为参数传过去后端
       // localStorage.setItem("management-captcha-uuid",res.uuid)
 
     },
     submitForm(formName) {
-        this.$refs[formName].validate( async (valid) => {
+        this.$refs[formName].validate((valid) => {
           if (valid) {
             // 校验通过
-            alert('submit!');
-            // let res = await LoginApi.apply({
-            //   username:this.ruleForm.username,
-            //   password:this.ruleForm.password,
-            //   code:this.ruleForm.captchacode,
-            //   uuid:localStorage.getItem("edb-captcha-uuid")
-            // })
-            // if (res == false) return; 
-            // console.log(res);
+            // 对验证码进行校验
+            if(!this.ruleForm.captchacode || this.ruleForm.captchacode !== this.viewCaptChaCode){
+              this.$message.error("验证码错误");
+              return;
+            }
+            let userInfo = {
+              username:this.ruleForm.username,
+              password:this.ruleForm.password
+            }
+            // 测试使用api来进行登录请求
+            LoginApi(userInfo)
+            .then(res => {
+                if (res.status === 200){
+                  console.log("登录成功返回的信息")
+                  console.log(res);
+                  // 登录成功之后的逻辑
+                  localStorage.setItem("edb-authorization-token",res.token);
+                  let rememberInfo = JSON.stringify({...userInfo})
+                  localStorage.setItem('rememberInfo',rememberInfo);  // 记住密码时，保存login
+                  this.$message({message:"登录成功！",type:"success"});
+                  this.$router.push("/");  // 跳转到首页
+                  this.asyncChangeUserInfo();
 
-            //登录成功之后的逻辑
-            // 提示用户登录成功
-            this.$message({message:"登录成功！",type:"success"});
-            // 清除uuid
-            // localStorage.removeItem("edb-captcha-uuid");
-            // 保存token
-            // localStorage.setItem("edb-authorization-token",res.token);
-            // 跳转首页
-            this.$router.push("/")
-            // console.log(res);
 
+                }else{
+                  localStorage.removeItem('rememberInfo')
+                  this.$alert("用户名或密码错误","登录失败",{
+                    confirmButtonText:'确定',
+                    callback:()=>{
+                      this.ruleForm.username='',
+                      this.ruleForm.password=''
+                    }
+                  })
+                }
+            }).catch(err => {
+              if(err.response) {
+                // 请求已发出，但服务器返回的状态码不是2xx的响应
+                console.log("登录失败！",err.response.data.message);
+              }else {
+                // 其他错误
+                console.log("请求错误!", err.message);
+              }
+            });
+
+            // 测试使用axios.get来发送请求
+            // axios.get('http://127.0.0.1:3000/login',{
+            //   params:{
+            //     userName:this.ruleForm.username,
+            //     password:this.ruleForm.password
+            //   }
+            // }).then(res => {
+            //   if (res.data.status === 200){
+            //     // 登录成功之后的逻辑
+            //     console.log("登录成功",res.data.message)
+            //     localStorage.setItem("edb-authorization-token",res.data.token);
+            //     let rememberInfo = JSON.stringify({...userInfo})
+            //     localStorage.setItem('rememberInfo',rememberInfo);  // 记住密码时，保存login
+            //     this.$message({message:"登录成功！",type:"success"});
+            //     this.$router.push("/");
+            //   }else{
+            //     localStorage.removeItem('rememberInfo')
+            //     this.$alert("用户名或密码错误","登录失败",{
+            //       confirmButtonText:'确定',
+            //       callback:()=>{
+            //         this.ruleForm.username='',
+            //         this.ruleForm.password=''
+            //       }
+            //     })
+            //   }
+            // }).catch(err => {
+            //   if(err.response) {
+            //     // 请求已发出，但服务器返回的状态码不是2xx的响应
+            //     console.log("登录失败！",err.response.data.message);
+            //   }else {
+            //     // 其他错误
+            //     console.log("请求错误!", err.message);
+            //   }
+            // });
           } else {
             // 校验不通过
             this.$message({
@@ -116,7 +194,16 @@ export default {
             return false;
           }
         });
-      },
+    },
+    // 跳转到注册
+    register(){
+      this.$router.push('/register');
+    },
+
+    // 获取vuex中的changeMenuData方法
+    ...mapMutations({changeMenuData:"userMenuData/changeMenuData"}),
+
+    ...mapActions({asyncChangeUserInfo:"userInfo/asyncChangeUserInfo"})
   },
 }
 </script>
@@ -157,6 +244,9 @@ export default {
     };
     #login-btn-box .el-form-item__content{
       margin-left: 40px !important; 
+    }
+    .el-button .el-button {
+      margin-left: 0px; 
     }
   };
 }  

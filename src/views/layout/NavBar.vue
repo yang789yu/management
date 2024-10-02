@@ -14,19 +14,22 @@
          -->
         <el-menu
             :router="true"
-            default-active="3"
+            :default-active="$route.path"
             class="el-menu-vertical-demo"
             background-color="#304156"
             text-color="#fff"
             :unique-opened="true"
             :collapse="isCollapse"
             :collapse-transition="false"   
-            active-text-color="#ffd04b">
+            active-text-color="#ffd04b" 
+            >
+
 
             <div v-for="item, idx in menuData" :key="idx">
                 <el-submenu :index="item.path" v-if="item.children">
                     <template slot="title">
                         <i class="el-icon-location"></i>
+                        <!-- <svg-icon icon-name="people" style="margin: 0 10px 0 4px;"></svg-icon> -->
                         <span>{{ item.title }}</span>
                     </template>
                     <el-menu-item :index="sitem.path" v-for="sitem, sidx in item.children" :key="sidx">{{ sitem.title }}</el-menu-item>
@@ -51,41 +54,42 @@ export default {
     name:"NavBar",
     data() {
         return {
-            menuData:[
-                {
-                    title:"首页",
-                    path:"/"
-                },
-                {
-                    title:"客户管理",
-                    path:"/customer",
-                    children:[
-                        {title:"客户档案",path:"/customer/customer"},
-                        {title:"拜访记录",path:"/customer/visit"}
-                    ]
-                },
-                {
-                    title:"修养预约",
-                    path:"/business",
-                    children:[
-                        {title:"预约信息",path:"/business/appointment"},
-                        {title:"服务项",path:"/business/service"},
-                        {title:"结算单",path:"/business/statement"},
-                    ]
-                },
-                {
-                    title:"审核管理",
-                    path:"/flow",
-                    children:[
-                        {title:"审核流程定义",path:"/flow/definition"}
-                    ]
-                }
-            ]
+            // menuData:[
+            //     {
+            //         title:"首页",
+            //         path:"/"
+            //     },
+            //     {
+            //         title:"客户管理",
+            //         path:"/customer",
+            //         children:[
+            //             {title:"客户档案",path:"/customer/customer"},
+            //             {title:"拜访记录",path:"/customer/visit"}
+            //         ]
+            //     },
+            //     {
+            //         title:"修养预约",
+            //         path:"/business",
+            //         children:[
+            //             {title:"预约信息",path:"/business/appointment"},
+            //             {title:"服务项",path:"/business/service"},
+            //             {title:"结算单",path:"/business/statement"},
+            //         ]
+            //     },
+            //     {
+            //         title:"审核管理",
+            //         path:"/flow",
+            //         children:[
+            //             {title:"审核流程定义",path:"/flow/definition"}
+            //         ]
+            //     }
+            // ]
         }
     },
     computed:{
         ...mapState({
-            isCollapse:state=>state.navCollapse.isCollapse
+            isCollapse:state => state.navCollapse.isCollapse,
+            menuData:state => state.userMenuData.menuData
         })
     }
 }
@@ -95,7 +99,7 @@ export default {
     .navbar {
         width: 220px;
         height: 100%;
-        position: relative;  //表示元素相对于其正常位置进行定位,提升该元素的层级
+        position: fixed;  //表示元素相对于其正常位置进行定位,提升该元素的层级
         background-color: #304156;
         transition: all .3s;   // 过渡效果
         box-shadow: 6px 0 5px #ccc; //表示在元素上添加一个阴影。
@@ -136,5 +140,13 @@ export default {
             display: none;
     }
 
+    // 处理子菜单的背景，和鼠标移上的背景
+    .el-submenu .el-menu-item{
+        background-color: rgb(38, 52, 69) !important;
+    }
+
+    .el-menu .el-menu-item:hover,::v-deep .el-submenu__title:hover{
+        background-color: #444 !important;
+    }
 
 </style>
